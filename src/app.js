@@ -3,6 +3,10 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
+const authRoutes = require('./routes/authRoutes');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { generalLimiter } = require('./middleware/rateLimiter');
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -15,8 +19,9 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(generalLimiter);
 
 app.get('/health', (req, res) => {
   res.json({
@@ -32,6 +37,11 @@ app.get('/', (req, res) => {
     version: '1.0.0',
   });
 });
+
+app.use('/api/auth', authRoutes);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
