@@ -1,5 +1,6 @@
 const { verifyToken } = require('../utils/jwt');
 const { supabase } = require('../config/database');
+const { isBlacklisted } = require('../utils/tokenBlacklist');
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -10,6 +11,13 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({
         error: 'Access token required',
         code: 'TOKEN_MISSING',
+      });
+    }
+
+    if (isBlacklisted(token)) {
+      return res.status(401).json({
+        error: 'Token has been invalidated',
+        code: 'TOKEN_BLACKLISTED',
       });
     }
 

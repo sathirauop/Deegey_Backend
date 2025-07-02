@@ -7,15 +7,8 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  verifyPhone,
 } = require('../controllers/authController');
-const {
-  registerValidation,
-  loginValidation,
-  forgotPasswordValidation,
-  resetPasswordValidation,
-  refreshTokenValidation,
-  verifyEmailValidation,
-} = require('../middleware/validation');
 const {
   loginLimiter,
   registerLimiter,
@@ -25,24 +18,21 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/register', registerLimiter, registerValidation, register);
+router.post('/register', registerLimiter, register);
 
-router.post('/login', loginLimiter, loginValidation, login);
+router.post('/login', loginLimiter, login);
 
-router.post('/refresh-token', refreshTokenValidation, refreshToken);
+router.post('/refresh-token', refreshToken);
 
 router.post('/logout', authenticateToken, logout);
 
-router.post(
-  '/forgot-password',
-  passwordResetLimiter,
-  forgotPasswordValidation,
-  forgotPassword
-);
+router.post('/forgot-password', passwordResetLimiter, forgotPassword);
 
-router.post('/reset-password', resetPasswordValidation, resetPassword);
+router.post('/reset-password', resetPassword);
 
-router.post('/verify-email', verifyEmailValidation, verifyEmail);
+router.post('/verify-email', verifyEmail);
+
+router.post('/verify-phone', verifyPhone);
 
 router.get('/me', authenticateToken, (req, res) => {
   res.json({
