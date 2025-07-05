@@ -28,6 +28,7 @@ const authenticateToken = async (req, res, next) => {
       email_confirmed_at: user.email_confirmed_at,
       phone_confirmed_at: user.phone_confirmed_at,
       user_metadata: user.user_metadata,
+      jwt: token,
     };
 
     next();
@@ -56,6 +57,7 @@ const optionalAuth = async (req, res, next) => {
           email_confirmed_at: user.email_confirmed_at,
           phone_confirmed_at: user.phone_confirmed_at,
           user_metadata: user.user_metadata,
+          jwt: token,
         };
       }
     }

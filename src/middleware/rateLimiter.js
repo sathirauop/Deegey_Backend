@@ -45,7 +45,7 @@ const passwordResetLimiter = rateLimit({
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: {
     error: 'Too many requests',
     code: 'RATE_LIMIT_EXCEEDED',

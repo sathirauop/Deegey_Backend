@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
+app.use('/api/profiles', profileRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

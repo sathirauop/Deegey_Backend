@@ -302,9 +302,12 @@ const verifyEmail = async (req, res) => {
 
     // Update registration step if both email and phone are verified
     const currentUser = data.user;
+    let nextStep = 'email_verified';
     if (currentUser.phone_confirmed_at) {
-      await userModel.updateRegistrationStep(currentUser.id, 'verified');
+      nextStep = 'profile_stage_1';
     }
+    
+    await userModel.updateRegistrationStep(currentUser.id, nextStep);
 
     const sanitizedUser = userModel.sanitizeForClient(data.user);
 
@@ -315,10 +318,10 @@ const verifyEmail = async (req, res) => {
       accessToken: data.session?.access_token,
       refreshToken: data.session?.refresh_token,
       expiresAt: data.session?.expires_at,
-      registrationStep: currentUser.phone_confirmed_at ? 'verified' : 'basic',
+      registrationStep: nextStep,
       nextSteps: currentUser.phone_confirmed_at
-        ? ['Complete profile information']
-        : ['Verify phone number', 'Complete profile information'],
+        ? ['Complete profile stage 1']
+        : ['Verify phone number', 'Complete profile stage 1'],
     });
   } catch (error) {
     console.error('Internal server error:', error.message);
@@ -356,9 +359,12 @@ const verifyPhone = async (req, res) => {
 
     // Update registration step if both email and phone are verified
     const currentUser = data.user;
+    let nextStep = 'phone_verified';
     if (currentUser.email_confirmed_at) {
-      await userModel.updateRegistrationStep(currentUser.id, 'verified');
+      nextStep = 'profile_stage_1';
     }
+    
+    await userModel.updateRegistrationStep(currentUser.id, nextStep);
 
     const sanitizedUser = userModel.sanitizeForClient(data.user);
 
@@ -369,10 +375,10 @@ const verifyPhone = async (req, res) => {
       accessToken: data.session?.access_token,
       refreshToken: data.session?.refresh_token,
       expiresAt: data.session?.expires_at,
-      registrationStep: currentUser.email_confirmed_at ? 'verified' : 'basic',
+      registrationStep: nextStep,
       nextSteps: currentUser.email_confirmed_at
-        ? ['Complete profile information']
-        : ['Verify email address', 'Complete profile information'],
+        ? ['Complete profile stage 1']
+        : ['Verify email address', 'Complete profile stage 1'],
     });
   } catch (error) {
     console.error('Internal server error:', error.message);

@@ -5,6 +5,8 @@ const {
   getProfile,
   getProfileCompletion,
   getPublicProfile,
+  updateProfileStage,
+  getProfileStage,
 } = require('../controllers/profileController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -15,6 +17,10 @@ router.post('/', authenticateToken, createProfile);
 router.put('/', authenticateToken, updateProfile);
 router.get('/', authenticateToken, getProfile);
 router.get('/completion', authenticateToken, getProfileCompletion);
+
+// Profile stage routes
+router.get('/stages/:stage', authenticateToken, getProfileStage);
+router.put('/stages/:stage', authenticateToken, updateProfileStage);
 
 // Public profile route
 router.get('/public/:userId', getPublicProfile);

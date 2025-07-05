@@ -2,8 +2,8 @@ const BaseModel = require('./BaseModel');
 const Joi = require('joi');
 
 class Profile extends BaseModel {
-  constructor() {
-    super('profiles');
+  constructor(authenticatedClient = null) {
+    super('profiles', authenticatedClient);
   }
 
   static get validationSchema() {
@@ -132,6 +132,92 @@ class Profile extends BaseModel {
         primaryPhotoUrl: Joi.string().uri().optional(),
         hobbies: Joi.array().items(Joi.string()).optional(),
         interests: Joi.array().items(Joi.string()).optional(),
+      }),
+
+      stage1: Joi.object({
+        maritalStatus: Joi.string()
+          .valid('single', 'divorced', 'widowed', 'separated')
+          .required(),
+        education: Joi.string()
+          .valid(
+            'high_school',
+            'diploma',
+            'bachelors',
+            'masters',
+            'phd',
+            'professional',
+            'other'
+          )
+          .required(),
+        occupation: Joi.string().min(2).max(100).required(),
+        height: Joi.number().integer().min(120).max(250).required(),
+        motherTongue: Joi.string()
+          .valid('sinhala', 'tamil', 'english', 'other')
+          .required(),
+      }),
+
+      stage2: Joi.object({
+        aboutMe: Joi.string().max(1000).optional(),
+        familyDetails: Joi.string().max(1000).optional(),
+        workLocation: Joi.object({
+          country: Joi.string().min(2).max(100).optional(),
+          state: Joi.string().min(2).max(100).optional(),
+          city: Joi.string().min(2).max(100).optional(),
+        }).optional(),
+        immigrationStatus: Joi.string()
+          .valid(
+            'citizen',
+            'permanent_resident',
+            'work_visa',
+            'student_visa',
+            'other'
+          )
+          .optional(),
+        income: Joi.number().integer().min(0).optional(),
+        bodyType: Joi.string()
+          .valid('slim', 'average', 'athletic', 'heavy')
+          .optional(),
+        weight: Joi.number().integer().min(30).max(200).optional(),
+        complexion: Joi.string()
+          .valid('fair', 'wheatish', 'dusky', 'dark')
+          .optional(),
+        employmentType: Joi.string()
+          .valid(
+            'employed',
+            'self_employed',
+            'business',
+            'student',
+            'unemployed'
+          )
+          .optional(),
+      }),
+
+      stage3: Joi.object({
+        dietaryPreference: Joi.string()
+          .valid('vegetarian', 'non_vegetarian', 'vegan', 'jain_vegetarian')
+          .optional(),
+        familyValues: Joi.string()
+          .valid('traditional', 'moderate', 'liberal')
+          .optional(),
+        smokingHabits: Joi.string()
+          .valid('never', 'occasionally', 'regularly')
+          .optional(),
+        drinkingHabits: Joi.string()
+          .valid('never', 'socially', 'occasionally', 'regularly')
+          .optional(),
+        partnerExpectations: Joi.string().max(1000).optional(),
+        willingToRelocate: Joi.boolean().optional(),
+        hobbies: Joi.array().items(Joi.string()).optional(),
+        interests: Joi.array().items(Joi.string()).optional(),
+        caste: Joi.string().max(100).optional(),
+        subCaste: Joi.string().max(100).optional(),
+        familyType: Joi.string().valid('nuclear', 'joint').optional(),
+      }),
+
+      stage4: Joi.object({
+        primaryPhotoUrl: Joi.string().uri().optional(),
+        profilePhotos: Joi.array().items(Joi.string().uri()).optional(),
+        isPublic: Joi.boolean().optional(),
       }),
     };
   }

@@ -1,9 +1,9 @@
 const { supabase, supabaseAdmin } = require('../config/database');
 
 class BaseModel {
-  constructor(tableName) {
+  constructor(tableName, authenticatedClient = null) {
     this.tableName = tableName;
-    this.db = supabase;
+    this.db = authenticatedClient || supabase;
     this.adminDb = supabaseAdmin;
   }
 
