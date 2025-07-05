@@ -6,6 +6,8 @@ const register = async (req, res) => {
     const userData = User.validate(req.body, 'register');
     const userModel = new User();
 
+    console.log(userData);
+
     // Check for existing email
     const existingUser = await userModel.findByEmail(userData.email);
     if (existingUser) {
