@@ -270,8 +270,15 @@ class User extends BaseModel {
 
   async updateLastLogin(userId) {
     try {
+      const { data: currentUser, error: getUserError } = await this.adminDb.auth.admin.getUserById(userId);
+      
+      if (getUserError) {
+        throw getUserError;
+      }
+
       const { error } = await this.adminDb.auth.admin.updateUserById(userId, {
         user_metadata: {
+          ...currentUser.user.user_metadata,
           last_login: new Date().toISOString(),
         },
       });
@@ -393,15 +400,16 @@ class User extends BaseModel {
 
     const metadata = user.user_metadata || {};
 
+    // Only include safe, non-sensitive user data
     return {
       id: user.id,
       email: user.email,
-      phone: user.phone,
-      emailVerified: !!user.email_confirmed_at,
+      // Don't expose full phone number - only verification status
       phoneVerified: !!user.phone_confirmed_at,
+      emailVerified: !!user.email_confirmed_at,
       firstName: metadata.first_name,
       lastName: metadata.last_name,
-      dateOfBirth: metadata.date_of_birth,
+      // Don't expose exact date of birth - only age
       age: metadata.date_of_birth
         ? this.calculateAge(metadata.date_of_birth)
         : null,
@@ -414,7 +422,7 @@ class User extends BaseModel {
       registrationStep: metadata.registration_step || 'basic',
       accountStatus: metadata.account_status || 'active',
       createdAt: user.created_at,
-      lastLogin: metadata.last_login,
+      // Don't expose exact last login time for privacy
     };
   }
 

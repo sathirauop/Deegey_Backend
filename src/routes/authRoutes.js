@@ -13,6 +13,7 @@ const {
   loginLimiter,
   registerLimiter,
   passwordResetLimiter,
+  generalLimiter,
 } = require('../middleware/rateLimiter');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -22,21 +23,24 @@ router.post('/register', registerLimiter, register);
 
 router.post('/login', loginLimiter, login);
 
-router.post('/refresh-token', refreshToken);
+router.post('/refresh-token', generalLimiter, refreshToken);
 
 router.post('/logout', authenticateToken, logout);
 
 router.post('/forgot-password', passwordResetLimiter, forgotPassword);
 
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', generalLimiter, resetPassword);
 
-router.post('/verify-email', verifyEmail);
+router.post('/verify-email', generalLimiter, verifyEmail);
 
-router.post('/verify-phone', verifyPhone);
+router.post('/verify-phone', generalLimiter, verifyPhone);
 
-router.get('/me', authenticateToken, (req, res) => {
+router.get('/me', authenticateToken, generalLimiter, (req, res) => {
+  const User = require('../models/User');
+  const userModel = new User();
+  
   res.json({
-    user: req.user,
+    user: userModel.sanitizeForClient(req.user),
   });
 });
 

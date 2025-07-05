@@ -1,15 +1,10 @@
 const User = require('../models/User');
-const { generateTokenPair, verifyToken } = require('../utils/jwt');
 const { supabase } = require('../config/database');
-const { addToBlacklist } = require('../utils/tokenBlacklist');
 
 const register = async (req, res) => {
   try {
-    console.log(req.body);
-
     const userData = User.validate(req.body, 'register');
     const userModel = new User();
-    console.log(userData);
 
     // Check for existing email
     const existingUser = await userModel.findByEmail(userData.email);
@@ -19,7 +14,6 @@ const register = async (req, res) => {
         code: 'EMAIL_EXISTS',
       });
     }
-    console.log("ghghfh" + existingUser);
 
     // Check for existing phone
     const existingPhone = await userModel.findByPhone(userData.phone);
@@ -30,24 +24,49 @@ const register = async (req, res) => {
       });
     }
 
-    const newUser = await userModel.createWithSupabase(userData);
-
-    const tokens = generateTokenPair({
-      sub: newUser.id,
-      email: newUser.email,
+    const { data, error } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      phone: userData.phone,
+      options: {
+        data: {
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          date_of_birth: userData.dateOfBirth,
+          gender: userData.gender,
+          religion: userData.religion,
+          country: userData.country,
+          living_country: userData.livingCountry,
+          state: userData.state,
+          city: userData.city,
+          registration_step: 'basic',
+          account_status: 'active',
+        },
+      },
     });
+
+    if (error) {
+      // Don't expose detailed Supabase error messages to prevent information leakage
+      return res.status(400).json({
+        error: 'Registration failed',
+        code: error.code || 'REGISTRATION_ERROR',
+      });
+    }
 
     res.status(201).json({
       message:
         'Registration successful. Please verify your email and phone number.',
-      user: userModel.sanitizeForClient(newUser),
+      user: userModel.sanitizeForClient(data.user),
       registrationStep: 'basic',
       nextSteps: [
         'Verify email address',
         'Verify phone number',
         'Complete profile information',
       ],
-      ...tokens,
+      // Only return session tokens, not full session object for security
+      accessToken: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
     });
   } catch (error) {
     if (error.isValidation) {
@@ -57,9 +76,10 @@ const register = async (req, res) => {
       });
     }
 
+    console.error('Internal server error:', error.message);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      code: 'INTERNAL_ERROR',
     });
   }
 };
@@ -68,13 +88,12 @@ const login = async (req, res) => {
   try {
     const loginData = User.validate(req.body, 'login');
 
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({
-        email: loginData.email,
-        password: loginData.password,
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginData.email,
+      password: loginData.password,
+    });
 
-    if (authError) {
+    if (error) {
       return res.status(401).json({
         error: 'Invalid credentials',
         code: 'INVALID_CREDENTIALS',
@@ -82,17 +101,15 @@ const login = async (req, res) => {
     }
 
     const userModel = new User();
-    await userModel.updateLastLogin(authData.user.id);
-
-    const tokens = generateTokenPair({
-      sub: authData.user.id,
-      email: authData.user.email,
-    });
+    await userModel.updateLastLogin(data.user.id);
 
     res.json({
       message: 'Login successful',
-      user: userModel.sanitizeForClient(authData.user),
-      ...tokens,
+      user: userModel.sanitizeForClient(data.user),
+      // Only return session tokens, not full session object for security
+      accessToken: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
     });
   } catch (error) {
     if (error.isValidation) {
@@ -102,49 +119,49 @@ const login = async (req, res) => {
       });
     }
 
+    console.error('Internal server error:', error.message);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      code: 'INTERNAL_ERROR',
     });
   }
 };
 
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: refresh_token } = req.body;
 
-    if (!refreshToken) {
+    if (!refresh_token) {
       return res.status(401).json({
         error: 'Refresh token required',
         code: 'REFRESH_TOKEN_MISSING',
       });
     }
 
-    const decoded = verifyToken(refreshToken);
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token });
 
-    const userModel = new User();
-    const user = await userModel.findById(decoded.sub);
-
-    if (!user) {
+    if (error) {
       return res.status(401).json({
-        error: 'Invalid refresh token',
+        error: 'Token refresh failed',
         code: 'REFRESH_TOKEN_INVALID',
       });
     }
 
-    const tokens = generateTokenPair({
-      sub: user.id,
-      email: user.email,
-    });
+    const userModel = new User();
 
     res.json({
       message: 'Token refreshed successfully',
-      ...tokens,
+      user: userModel.sanitizeForClient(data.user),
+      // Only return session tokens, not full session object for security
+      accessToken: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
     });
-  } catch (error) {
+  } catch (refreshError) {
+    console.error('Token refresh error:', refreshError.message);
     res.status(401).json({
       error: 'Token refresh failed',
-      message: error.message,
+      code: 'REFRESH_ERROR',
     });
   }
 };
@@ -155,18 +172,20 @@ const logout = async (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      addToBlacklist(token);
+      const { error } = await supabase.auth.admin.signOut(token);
+      if (error) {
+        console.error('Error signing out user:', error.message);
+      }
     }
-
-    await supabase.auth.signOut();
 
     res.json({
       message: 'Logout successful',
     });
-  } catch (error) {
+  } catch (logoutError) {
+    console.error('Logout error:', logoutError.message);
     res.status(500).json({
       error: 'Logout failed',
-      message: error.message,
+      code: 'LOGOUT_ERROR',
     });
   }
 };
@@ -183,9 +202,9 @@ const forgotPassword = async (req, res) => {
     );
 
     if (error) {
-      return res.status(400).json({
-        error: 'Password reset failed',
-        message: error.message,
+      // Always return success to prevent email enumeration
+      return res.json({
+        message: 'If the email exists, a password reset link has been sent',
       });
     }
 
@@ -200,9 +219,10 @@ const forgotPassword = async (req, res) => {
       });
     }
 
+    console.error('Internal server error:', error.message);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      code: 'INTERNAL_ERROR',
     });
   }
 };
@@ -230,7 +250,7 @@ const resetPassword = async (req, res) => {
     if (updateError) {
       return res.status(400).json({
         error: 'Password update failed',
-        message: updateError.message,
+        code: 'PASSWORD_UPDATE_ERROR',
       });
     }
 
@@ -245,16 +265,17 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    console.error('Internal server error:', error.message);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      code: 'INTERNAL_ERROR',
     });
   }
 };
 
 const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, type = 'email' } = req.body;
 
     if (!token) {
       return res.status(400).json({
@@ -265,13 +286,13 @@ const verifyEmail = async (req, res) => {
 
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: token,
-      type: 'email',
+      type: type,
     });
 
     if (error) {
       return res.status(400).json({
         error: 'Email verification failed',
-        message: error.message,
+        code: 'VERIFICATION_ERROR',
       });
     }
 
@@ -288,22 +309,27 @@ const verifyEmail = async (req, res) => {
     res.json({
       message: 'Email verified successfully',
       user: sanitizedUser,
+      // Only return session tokens, not full session object for security
+      accessToken: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
       registrationStep: currentUser.phone_confirmed_at ? 'verified' : 'basic',
       nextSteps: currentUser.phone_confirmed_at
         ? ['Complete profile information']
         : ['Verify phone number', 'Complete profile information'],
     });
   } catch (error) {
+    console.error('Internal server error:', error.message);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      code: 'INTERNAL_ERROR',
     });
   }
 };
 
 const verifyPhone = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, type = 'sms' } = req.body;
 
     if (!token) {
       return res.status(400).json({
@@ -314,13 +340,13 @@ const verifyPhone = async (req, res) => {
 
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: token,
-      type: 'sms',
+      type: type,
     });
 
     if (error) {
       return res.status(400).json({
         error: 'Phone verification failed',
-        message: error.message,
+        code: 'VERIFICATION_ERROR',
       });
     }
 
@@ -337,15 +363,20 @@ const verifyPhone = async (req, res) => {
     res.json({
       message: 'Phone verified successfully',
       user: sanitizedUser,
+      // Only return session tokens, not full session object for security
+      accessToken: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
       registrationStep: currentUser.email_confirmed_at ? 'verified' : 'basic',
       nextSteps: currentUser.email_confirmed_at
         ? ['Complete profile information']
         : ['Verify email address', 'Complete profile information'],
     });
   } catch (error) {
+    console.error('Internal server error:', error.message);
     res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      code: 'INTERNAL_ERROR',
     });
   }
 };

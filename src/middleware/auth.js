@@ -1,6 +1,4 @@
-const { verifyToken } = require('../utils/jwt');
 const { supabase } = require('../config/database');
-const { isBlacklisted } = require('../utils/tokenBlacklist');
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -14,20 +12,7 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    if (isBlacklisted(token)) {
-      return res.status(401).json({
-        error: 'Token has been invalidated',
-        code: 'TOKEN_BLACKLISTED',
-      });
-    }
-
-    const decoded = verifyToken(token);
-
-    const { data: user, error } = await supabase
-      .from('auth.users')
-      .select('id, email, email_confirmed_at')
-      .eq('id', decoded.sub)
-      .single();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
       return res.status(401).json({
@@ -37,17 +22,20 @@ const authenticateToken = async (req, res, next) => {
     }
 
     req.user = {
-      id: decoded.sub,
-      email: decoded.email,
-      ...user,
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      email_confirmed_at: user.email_confirmed_at,
+      phone_confirmed_at: user.phone_confirmed_at,
+      user_metadata: user.user_metadata,
     };
 
     next();
   } catch (error) {
+    console.error('Token verification error:', error.message);
     return res.status(401).json({
       error: 'Token verification failed',
       code: 'TOKEN_EXPIRED',
-      message: error.message,
     });
   }
 };
@@ -58,11 +46,18 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = verifyToken(token);
-      req.user = {
-        id: decoded.sub,
-        email: decoded.email,
-      };
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (!error && user) {
+        req.user = {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          email_confirmed_at: user.email_confirmed_at,
+          phone_confirmed_at: user.phone_confirmed_at,
+          user_metadata: user.user_metadata,
+        };
+      }
     }
 
     next();
