@@ -28,6 +28,7 @@ const authenticateToken = async (req, res, next) => {
       email_confirmed_at: user.email_confirmed_at,
       phone_confirmed_at: user.phone_confirmed_at,
       user_metadata: user.user_metadata,
+      profileCompletionStage: user.user_metadata?.profile_completion_stage || 'stage1',
       jwt: token,
     };
 
@@ -57,6 +58,7 @@ const optionalAuth = async (req, res, next) => {
           email_confirmed_at: user.email_confirmed_at,
           phone_confirmed_at: user.phone_confirmed_at,
           user_metadata: user.user_metadata,
+          profileCompletionStage: user.user_metadata?.profile_completion_stage || 'stage1',
           jwt: token,
         };
       }

@@ -2,7 +2,7 @@ const rateLimit = require('express-rate-limit');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: {
     error: 'Too many login attempts',
     code: 'RATE_LIMIT_EXCEEDED',
@@ -18,7 +18,7 @@ const loginLimiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 30,
+  max: 70,
   message: {
     error: 'Too many registration attempts',
     code: 'RATE_LIMIT_EXCEEDED',
@@ -55,9 +55,25 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const createRateLimiter = (options) => {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    max: options.max || 100,
+    message: {
+      error: options.message || 'Too many requests',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: options.retryAfter || '15 minutes',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    ...options,
+  });
+};
+
 module.exports = {
   loginLimiter,
   registerLimiter,
   passwordResetLimiter,
   generalLimiter,
+  createRateLimiter,
 };

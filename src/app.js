@@ -12,7 +12,11 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5000',
+    origin: [
+      process.env.CLIENT_URL || 'http://localhost:5000',
+      'http://localhost:5173',
+      'http://localhost:5174'
+    ],
     methods: ['GET', 'POST'],
   },
 });
@@ -23,7 +27,11 @@ const PORT = process.env.PORT || 3000;
 app.disable('x-powered-by');
 
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5000',
+  origin: [
+    process.env.CLIENT_URL || 'http://localhost:5000',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,

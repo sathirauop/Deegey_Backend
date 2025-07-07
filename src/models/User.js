@@ -12,7 +12,8 @@ class User extends BaseModel {
       if (error) throw error;
       return data.user;
     } catch (error) {
-      throw new Error(`Error finding user by ID: ${error.message}`);
+      console.error('Error finding user by ID:', error);
+      throw new Error('Failed to find user');
     }
   }
 
@@ -165,7 +166,8 @@ class User extends BaseModel {
       const user = data.users.find(u => u.email === email);
       return user || null;
     } catch (error) {
-      throw new Error(`Error finding user by email: ${error.message}`);
+      console.error('Error finding user by email:', error);
+      throw new Error('Failed to find user');
     }
   }
 
@@ -179,7 +181,8 @@ class User extends BaseModel {
       );
       return user || null;
     } catch (error) {
-      throw new Error(`Error finding user by phone: ${error.message}`);
+      console.error('Error finding user by phone:', error);
+      throw new Error('Failed to find user');
     }
   }
 
@@ -217,7 +220,7 @@ class User extends BaseModel {
             living_country: livingCountry,
             state,
             city,
-            registration_step: 'basic',
+            minimal_profile_completion: false,
             account_status: 'active',
           },
         });
@@ -241,20 +244,29 @@ class User extends BaseModel {
         city,
         emailVerified: false,
         phoneVerified: false,
-        registrationStep: 'basic',
+        minimalProfileCompletion: false,
         accountStatus: 'active',
         createdAt: authUser.user.created_at,
       };
     } catch (error) {
-      throw new Error(`Error creating user: ${error.message}`);
+      console.error('Error creating user:', error);
+      throw new Error('Failed to create user');
     }
   }
 
-  async updateRegistrationStep(userId, step) {
+
+  async setMinimalProfileCompletion(userId, completed = true) {
     try {
+      const { data: currentUser, error: getUserError } = await this.adminDb.auth.admin.getUserById(userId);
+      
+      if (getUserError) {
+        throw getUserError;
+      }
+
       const { error } = await this.adminDb.auth.admin.updateUserById(userId, {
         user_metadata: {
-          registration_step: step,
+          ...currentUser.user.user_metadata,
+          minimal_profile_completion: completed,
         },
       });
 
@@ -264,7 +276,23 @@ class User extends BaseModel {
 
       return true;
     } catch (error) {
-      throw new Error(`Error updating registration step: ${error.message}`);
+      console.error('Error setting minimal profile completion:', error);
+      throw new Error('Failed to update profile status');
+    }
+  }
+
+  async getMinimalProfileCompletion(userId) {
+    try {
+      const { data: user, error } = await this.adminDb.auth.admin.getUserById(userId);
+      
+      if (error) {
+        throw error;
+      }
+
+      return user.user.user_metadata?.minimal_profile_completion || false;
+    } catch (error) {
+      console.error('Error getting minimal profile completion:', error);
+      throw new Error('Failed to get profile status');
     }
   }
 
@@ -289,7 +317,8 @@ class User extends BaseModel {
 
       return true;
     } catch (error) {
-      throw new Error(`Error updating last login: ${error.message}`);
+      console.error('Error updating last login:', error);
+      throw new Error('Failed to update user');
     }
   }
 
@@ -375,7 +404,8 @@ class User extends BaseModel {
         active: activeUsers,
       };
     } catch (error) {
-      throw new Error(`Error getting user stats: ${error.message}`);
+      console.error('Error getting user stats:', error);
+      throw new Error('Failed to get statistics');
     }
   }
 
@@ -419,7 +449,7 @@ class User extends BaseModel {
       livingCountry: metadata.living_country,
       state: metadata.state,
       city: metadata.city,
-      registrationStep: metadata.registration_step || 'basic',
+      minimalProfileCompletion: metadata.minimal_profile_completion || false,
       accountStatus: metadata.account_status || 'active',
       createdAt: user.created_at,
       // Don't expose exact last login time for privacy

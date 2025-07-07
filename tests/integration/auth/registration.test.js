@@ -39,6 +39,7 @@ describe('Authentication - Registration Flow', () => {
       
       // Check registration flow fields
       expect(response.body).toHaveProperty('registrationStep', 'basic');
+      expect(response.body).toHaveProperty('profileCompletionStage', 'stage1');
       expect(response.body).toHaveProperty('nextSteps');
       expect(Array.isArray(response.body.nextSteps)).toBe(true);
       expect(response.body.nextSteps).toContain('Verify email address');

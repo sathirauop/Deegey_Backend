@@ -38,7 +38,43 @@ DeeGey is a Sri Lankan diaspora matrimonial platform migrating from WordPress to
 
 ### Client Applications
 - **Mobile App**: Existing Flutter app (70% complete)
-- **Web App**: React + Vite + shadcn/ui (admin dashboard)
+- **Web App**: Modern React application with comprehensive tech stack (see Frontend Technologies section below)
+
+## Frontend Technologies
+
+### React Web Application
+
+#### Core Framework
+* **React 18.2+** - Latest stable version with concurrent features
+* **Vite 5.0+** - Ultra-fast build tool (3x faster than Create React App)
+* **JavaScript** - ES6+ with modern syntax
+
+#### UI & Styling
+* **shadcn/ui** - Modern, accessible React components
+* **Tailwind CSS 3.4+** - Utility-first CSS framework
+* **Radix UI** - Unstyled, accessible component primitives
+* **Lucide React** - Beautiful, customizable SVG icons
+
+#### State Management & Data Fetching
+* **React Query (TanStack Query)** - Server state management
+* **Redux Toolkit** - Application state management
+* **React Hook Form** - Performant form handling with validation
+
+#### Routing & Navigation
+* **React Router v7** - Declarative routing with data loading
+* **React Router DOM** - Browser history management
+
+#### Development Tools
+* **ESLint** - Code linting and quality enforcement
+* **Prettier** - Code formatting
+* **Husky** - Git hooks for code quality
+* **Vitest** - Unit testing framework
+
+#### Production Optimizations
+* **Code Splitting** - Route-based lazy loading
+* **Tree Shaking** - Dead code elimination
+* **Asset Optimization** - Image compression and CDN delivery
+* **PWA Support** - Service worker for offline functionality
 
 ## Development Commands
 

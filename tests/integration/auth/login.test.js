@@ -47,6 +47,9 @@ describe('Authentication - Login Flow', () => {
       expect(response.body).toHaveProperty('user');
       testUtils.validateSanitizedUser(response.body.user);
       expect(response.body.user.email).toBe(email);
+      
+      // Check profileCompletionStage is included
+      expect(response.body).toHaveProperty('profileCompletionStage');
     });
 
     test('should update last login timestamp on successful login', async () => {

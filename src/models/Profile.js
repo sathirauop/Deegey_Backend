@@ -72,19 +72,22 @@ class Profile extends BaseModel {
             'other'
           )
           .optional(),
-        occupation: Joi.string().min(2).max(100).optional(),
-        height: Joi.number().integer().min(120).max(250).optional(),
-        weight: Joi.number().integer().min(30).max(200).optional(),
+        occupation: Joi.string().min(2).max(100).allow(null, '').optional(),
+        height: Joi.number().integer().min(120).max(250).allow(null).optional(),
+        weight: Joi.number().integer().min(30).max(200).allow(null).optional(),
         bodyType: Joi.string()
           .valid('slim', 'average', 'athletic', 'heavy')
+          .allow(null, '')
           .optional(),
         complexion: Joi.string()
           .valid('fair', 'wheatish', 'dusky', 'dark')
+          .allow(null, '')
           .optional(),
         motherTongue: Joi.string()
           .valid('sinhala', 'tamil', 'english', 'other')
+          .allow(null, '')
           .optional(),
-        knownLanguages: Joi.array().items(Joi.string()).optional(),
+        knownLanguages: Joi.array().items(Joi.string()).allow(null).optional(),
         employmentType: Joi.string()
           .valid(
             'employed',
@@ -93,27 +96,32 @@ class Profile extends BaseModel {
             'student',
             'unemployed'
           )
+          .allow(null, '')
           .optional(),
-        income: Joi.number().integer().min(0).optional(),
+        income: Joi.number().integer().min(0).allow(null).optional(),
         workLocation: Joi.object({
-          country: Joi.string().min(2).max(100).optional(),
-          state: Joi.string().min(2).max(100).optional(),
-          city: Joi.string().min(2).max(100).optional(),
-        }).optional(),
-        caste: Joi.string().max(100).optional(),
-        subCaste: Joi.string().max(100).optional(),
-        familyType: Joi.string().valid('nuclear', 'joint').optional(),
+          country: Joi.string().min(2).max(100).allow(null, '').optional(),
+          state: Joi.string().min(2).max(100).allow(null, '').optional(),
+          city: Joi.string().min(2).max(100).allow(null, '').optional(),
+        }).allow(null).optional(),
+        caste: Joi.string().max(100).allow(null, '').optional(),
+        subCaste: Joi.string().max(100).allow(null, '').optional(),
+        familyType: Joi.string().valid('nuclear', 'joint').allow(null, '').optional(),
         familyValues: Joi.string()
           .valid('traditional', 'moderate', 'liberal')
+          .allow(null, '')
           .optional(),
         dietaryPreference: Joi.string()
           .valid('vegetarian', 'non_vegetarian', 'vegan', 'jain_vegetarian')
+          .allow(null, '')
           .optional(),
         smokingHabits: Joi.string()
           .valid('never', 'occasionally', 'regularly')
+          .allow(null, '')
           .optional(),
         drinkingHabits: Joi.string()
           .valid('never', 'socially', 'occasionally', 'regularly')
+          .allow(null, '')
           .optional(),
         immigrationStatus: Joi.string()
           .valid(
@@ -123,102 +131,18 @@ class Profile extends BaseModel {
             'student_visa',
             'other'
           )
+          .allow(null, '')
           .optional(),
-        willingToRelocate: Joi.boolean().optional(),
-        aboutMe: Joi.string().max(1000).optional(),
-        familyDetails: Joi.string().max(1000).optional(),
-        partnerExpectations: Joi.string().max(1000).optional(),
-        profilePhotos: Joi.array().items(Joi.string().uri()).optional(),
-        primaryPhotoUrl: Joi.string().uri().optional(),
-        hobbies: Joi.array().items(Joi.string()).optional(),
-        interests: Joi.array().items(Joi.string()).optional(),
+        willingToRelocate: Joi.boolean().allow(null).optional(),
+        aboutMe: Joi.string().max(1000).allow(null, '').optional(),
+        familyDetails: Joi.string().max(1000).allow(null, '').optional(),
+        partnerExpectations: Joi.string().max(1000).allow(null, '').optional(),
+        profilePhotos: Joi.array().items(Joi.string().uri()).allow(null).optional(),
+        primaryPhotoUrl: Joi.string().uri().allow(null, '').optional(),
+        hobbies: Joi.array().items(Joi.string()).allow(null).optional(),
+        interests: Joi.array().items(Joi.string()).allow(null).optional(),
       }),
 
-      stage1: Joi.object({
-        maritalStatus: Joi.string()
-          .valid('single', 'divorced', 'widowed', 'separated')
-          .required(),
-        education: Joi.string()
-          .valid(
-            'high_school',
-            'diploma',
-            'bachelors',
-            'masters',
-            'phd',
-            'professional',
-            'other'
-          )
-          .required(),
-        occupation: Joi.string().min(2).max(100).required(),
-        height: Joi.number().integer().min(120).max(250).required(),
-        motherTongue: Joi.string()
-          .valid('sinhala', 'tamil', 'english', 'other')
-          .required(),
-      }),
-
-      stage2: Joi.object({
-        aboutMe: Joi.string().max(1000).optional(),
-        familyDetails: Joi.string().max(1000).optional(),
-        workLocation: Joi.object({
-          country: Joi.string().min(2).max(100).optional(),
-          state: Joi.string().min(2).max(100).optional(),
-          city: Joi.string().min(2).max(100).optional(),
-        }).optional(),
-        immigrationStatus: Joi.string()
-          .valid(
-            'citizen',
-            'permanent_resident',
-            'work_visa',
-            'student_visa',
-            'other'
-          )
-          .optional(),
-        income: Joi.number().integer().min(0).optional(),
-        bodyType: Joi.string()
-          .valid('slim', 'average', 'athletic', 'heavy')
-          .optional(),
-        weight: Joi.number().integer().min(30).max(200).optional(),
-        complexion: Joi.string()
-          .valid('fair', 'wheatish', 'dusky', 'dark')
-          .optional(),
-        employmentType: Joi.string()
-          .valid(
-            'employed',
-            'self_employed',
-            'business',
-            'student',
-            'unemployed'
-          )
-          .optional(),
-      }),
-
-      stage3: Joi.object({
-        dietaryPreference: Joi.string()
-          .valid('vegetarian', 'non_vegetarian', 'vegan', 'jain_vegetarian')
-          .optional(),
-        familyValues: Joi.string()
-          .valid('traditional', 'moderate', 'liberal')
-          .optional(),
-        smokingHabits: Joi.string()
-          .valid('never', 'occasionally', 'regularly')
-          .optional(),
-        drinkingHabits: Joi.string()
-          .valid('never', 'socially', 'occasionally', 'regularly')
-          .optional(),
-        partnerExpectations: Joi.string().max(1000).optional(),
-        willingToRelocate: Joi.boolean().optional(),
-        hobbies: Joi.array().items(Joi.string()).optional(),
-        interests: Joi.array().items(Joi.string()).optional(),
-        caste: Joi.string().max(100).optional(),
-        subCaste: Joi.string().max(100).optional(),
-        familyType: Joi.string().valid('nuclear', 'joint').optional(),
-      }),
-
-      stage4: Joi.object({
-        primaryPhotoUrl: Joi.string().uri().optional(),
-        profilePhotos: Joi.array().items(Joi.string().uri()).optional(),
-        isPublic: Joi.boolean().optional(),
-      }),
     };
   }
 
@@ -226,7 +150,8 @@ class Profile extends BaseModel {
     try {
       return await this.findOne({ user_id: userId });
     } catch (error) {
-      throw new Error(`Error finding profile by user ID: ${error.message}`);
+      console.error('Error finding profile by user ID:', error);
+      throw new Error('Failed to find profile');
     }
   }
 
@@ -253,7 +178,8 @@ class Profile extends BaseModel {
       const result = await this.create(profileRecord);
       return this.sanitizeForClient(result);
     } catch (error) {
-      throw new Error(`Error creating profile: ${error.message}`);
+      console.error('Error creating profile:', error);
+      throw new Error('Failed to create profile');
     }
   }
 
@@ -281,7 +207,8 @@ class Profile extends BaseModel {
       const result = await this.update(existingProfile.id, updateRecord);
       return this.sanitizeForClient(result);
     } catch (error) {
-      throw new Error(`Error updating profile: ${error.message}`);
+      console.error('Error updating profile:', error);
+      throw new Error('Failed to update profile');
     }
   }
 
@@ -306,88 +233,89 @@ class Profile extends BaseModel {
         profile: this.sanitizeForClient(profile),
       };
     } catch (error) {
-      throw new Error(`Error getting profile completion: ${error.message}`);
+      console.error('Error getting profile completion:', error);
+      throw new Error('Failed to get profile completion');
     }
   }
 
   calculateCompletionPercentage(profileData) {
-    const requiredFields = [
-      'marital_status',
-      'education',
-      'occupation',
-      'height',
-      'mother_tongue',
-    ];
+    // Stage-based scoring system
+    const stageFields = {
+      stage1: {
+        fields: ['marital_status', 'education', 'occupation', 'height', 'mother_tongue'],
+        weight: 25
+      },
+      stage2: {
+        fields: ['about_me', 'family_details', 'work_location', 'immigration_status', 'income', 'body_type', 'weight', 'complexion'],
+        weight: 25
+      },
+      stage3: {
+        fields: ['dietary_preference', 'family_values', 'smoking_habits', 'drinking_habits', 'partner_expectations', 'willing_to_relocate', 'hobbies', 'interests'],
+        weight: 25
+      },
+      stage4: {
+        fields: ['primary_photo_url', 'profile_photos'],
+        weight: 25
+      }
+    };
 
-    const optionalImportantFields = [
-      'about_me',
-      'primary_photo_url',
-      'dietary_preference',
-      'family_type',
-      'immigration_status',
-      'income',
-      'body_type',
-    ];
+    let totalScore = 0;
 
-    let score = 0;
-    const requiredWeight = 60; // 60% for required fields
-    const optionalWeight = 40; // 40% for optional important fields
+    // Calculate score for each stage
+    Object.values(stageFields).forEach(stage => {
+      const completedFields = stage.fields.filter(field => {
+        const value = profileData[field];
+        return value !== null && value !== undefined && value !== '' && 
+               !(Array.isArray(value) && value.length === 0);
+      }).length;
+      
+      const stageScore = (completedFields / stage.fields.length) * stage.weight;
+      totalScore += stageScore;
+    });
 
-    // Calculate required fields score
-    const completedRequired = requiredFields.filter(
-      (field) => profileData[field] && profileData[field] !== ''
-    ).length;
-    const requiredScore =
-      (completedRequired / requiredFields.length) * requiredWeight;
-
-    // Calculate optional fields score
-    const completedOptional = optionalImportantFields.filter(
-      (field) => profileData[field] && profileData[field] !== ''
-    ).length;
-    const optionalScore =
-      (completedOptional / optionalImportantFields.length) * optionalWeight;
-
-    score = Math.round(requiredScore + optionalScore);
-    return Math.min(100, Math.max(0, score));
+    return Math.min(100, Math.max(0, Math.round(totalScore)));
   }
 
   getMissingFields(profileData) {
-    const requiredFields = [
-      'marital_status',
-      'education',
-      'occupation',
-      'height',
-      'mother_tongue',
-    ];
-
-    const importantFields = [
-      'about_me',
-      'primary_photo_url',
-      'dietary_preference',
-      'family_type',
-      'immigration_status',
-    ];
+    const stageFields = {
+      stage1: {
+        fields: ['marital_status', 'education', 'occupation', 'height', 'mother_tongue'],
+        importance: 'required',
+        stage: 'Stage 1'
+      },
+      stage2: {
+        fields: ['about_me', 'family_details', 'immigration_status', 'income'],
+        importance: 'important',
+        stage: 'Stage 2'
+      },
+      stage3: {
+        fields: ['dietary_preference', 'family_values', 'partner_expectations'],
+        importance: 'optional',
+        stage: 'Stage 3'
+      },
+      stage4: {
+        fields: ['primary_photo_url'],
+        importance: 'important',
+        stage: 'Stage 4'
+      }
+    };
 
     const missing = [];
 
-    requiredFields.forEach((field) => {
-      if (!profileData[field] || profileData[field] === '') {
-        missing.push({
-          field: this.convertToCamelCase(field),
-          importance: 'required',
-          displayName: this.getFieldDisplayName(field),
-        });
-      }
-    });
-
-    importantFields.forEach((field) => {
-      if (!profileData[field] || profileData[field] === '') {
-        missing.push({
-          field: this.convertToCamelCase(field),
-          importance: 'important',
-          displayName: this.getFieldDisplayName(field),
-        });
-      }
+    Object.entries(stageFields).forEach(([_stageName, stageData]) => {
+      stageData.fields.forEach((field) => {
+        const value = profileData[field];
+        const isEmpty = !value || value === '' || (Array.isArray(value) && value.length === 0);
+        
+        if (isEmpty) {
+          missing.push({
+            field: this.convertToCamelCase(field),
+            importance: stageData.importance,
+            stage: stageData.stage,
+            displayName: this.getFieldDisplayName(field),
+          });
+        }
+      });
     });
 
     return missing;

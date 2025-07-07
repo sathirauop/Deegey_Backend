@@ -41,7 +41,6 @@ const register = async (req, res) => {
           living_country: userData.livingCountry,
           state: userData.state,
           city: userData.city,
-          registration_step: 'basic',
           account_status: 'active',
         },
       },
@@ -55,11 +54,14 @@ const register = async (req, res) => {
       });
     }
 
+    const sanitizedUser = userModel.sanitizeForClient(data.user);
+
     res.status(201).json({
       message:
         'Registration successful. Please verify your email and phone number.',
-      user: userModel.sanitizeForClient(data.user),
-      registrationStep: 'basic',
+      user: sanitizedUser,
+      minimalProfileCompletion: false,
+      canAccessDashboard: false,
       nextSteps: [
         'Verify email address',
         'Verify phone number',
@@ -105,9 +107,13 @@ const login = async (req, res) => {
     const userModel = new User();
     await userModel.updateLastLogin(data.user.id);
 
+    const sanitizedUser = userModel.sanitizeForClient(data.user);
+    
     res.json({
       message: 'Login successful',
-      user: userModel.sanitizeForClient(data.user),
+      user: sanitizedUser,
+      minimalProfileCompletion: sanitizedUser.minimalProfileCompletion,
+      canAccessDashboard: sanitizedUser.minimalProfileCompletion,
       // Only return session tokens, not full session object for security
       accessToken: data.session?.access_token,
       refreshToken: data.session?.refresh_token,
@@ -170,13 +176,31 @@ const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token) {
-      const { error } = await supabase.auth.admin.signOut(token);
+    // Get JWT token from the authenticated request
+    const jwtToken = req.user?.jwt;
+    
+    if (jwtToken) {
+      // Create authenticated client and sign out
+      const { createClient } = require('@supabase/supabase-js');
+      const authenticatedClient = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_ANON_KEY,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${jwtToken}`
+            }
+          }
+        }
+      );
+      
+      const { error } = await authenticatedClient.auth.signOut();
       if (error) {
         console.error('Error signing out user:', error.message);
+        return res.status(400).json({
+          error: 'Logout failed',
+          code: 'LOGOUT_ERROR',
+        });
       }
     }
 
@@ -299,16 +323,7 @@ const verifyEmail = async (req, res) => {
     }
 
     const userModel = new User();
-
-    // Update registration step if both email and phone are verified
     const currentUser = data.user;
-    let nextStep = 'email_verified';
-    if (currentUser.phone_confirmed_at) {
-      nextStep = 'profile_stage_1';
-    }
-    
-    await userModel.updateRegistrationStep(currentUser.id, nextStep);
-
     const sanitizedUser = userModel.sanitizeForClient(data.user);
 
     res.json({
@@ -318,10 +333,11 @@ const verifyEmail = async (req, res) => {
       accessToken: data.session?.access_token,
       refreshToken: data.session?.refresh_token,
       expiresAt: data.session?.expires_at,
-      registrationStep: nextStep,
+      emailVerified: true,
+      phoneVerified: !!currentUser.phone_confirmed_at,
       nextSteps: currentUser.phone_confirmed_at
-        ? ['Complete profile stage 1']
-        : ['Verify phone number', 'Complete profile stage 1'],
+        ? ['Complete your profile']
+        : ['Verify phone number', 'Complete your profile'],
     });
   } catch (error) {
     console.error('Internal server error:', error.message);
@@ -356,16 +372,7 @@ const verifyPhone = async (req, res) => {
     }
 
     const userModel = new User();
-
-    // Update registration step if both email and phone are verified
     const currentUser = data.user;
-    let nextStep = 'phone_verified';
-    if (currentUser.email_confirmed_at) {
-      nextStep = 'profile_stage_1';
-    }
-    
-    await userModel.updateRegistrationStep(currentUser.id, nextStep);
-
     const sanitizedUser = userModel.sanitizeForClient(data.user);
 
     res.json({
@@ -375,10 +382,11 @@ const verifyPhone = async (req, res) => {
       accessToken: data.session?.access_token,
       refreshToken: data.session?.refresh_token,
       expiresAt: data.session?.expires_at,
-      registrationStep: nextStep,
+      phoneVerified: true,
+      emailVerified: !!currentUser.email_confirmed_at,
       nextSteps: currentUser.email_confirmed_at
-        ? ['Complete profile stage 1']
-        : ['Verify email address', 'Complete profile stage 1'],
+        ? ['Complete your profile']
+        : ['Verify email address', 'Complete your profile'],
     });
   } catch (error) {
     console.error('Internal server error:', error.message);
